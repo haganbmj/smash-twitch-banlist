@@ -1,0 +1,23 @@
+{
+  "name": "smash-twitch-banlist",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haganbmj/smash-twitch-banlist.git"
+  },
+  "author": "Brendan Hagan (haganbmj)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/haganbmj/smash-twitch-banlist/issues"
+  },
+  "homepage": "https://github.com/haganbmj/smash-twitch-banlist#readme",
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "twitch-bot": "^1.0.6"
+  }
+}
