@@ -1,2 +1,3 @@
-USERNAME=BotUsername
-OAUTH=oauth:abcde12345
+TMI_DEBUG=true
+TMI_USERNAME=BotUsername
+TMI_OAUTH=oauth:abcde12345

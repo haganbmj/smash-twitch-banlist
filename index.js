@@ -1,75 +1,46 @@
-const dotenv = require('dotenv');
-const TwitchBot = require('twitch-bot');
+const tmi = require('tmi.js');
+const tmiOptions = require('./lib/tmiOptions');
+const db = require('./lib/database');
+const commands = require('./lib/commands');
+const util = require('./lib/util');
 
-dotenv.load();
-
-const channels = {};
 const timeoutDuration = 24 /* Hours */ * 60 /* Minutes */ * 60 /* Seconds */;
-let processedMessages = 0;
 
-const bannedUsernames = require('./lib/tempData/bannedUsernames.js');
-const adminUsernames = require('./lib/tempData/adminUsernames.js');
-const channelNames = require('./lib/tempData/channelNames.js');
+const client = new tmi.client(tmiOptions);
 
-const connect = channel => {
-  const bot = new TwitchBot({
-    username: process.env.USERNAME,
-    oauth: process.env.OAUTH,
-    channel: channel
-  });
+client.on('chat', (channel, user, message) => {
+  const userDbEntry = db.findUser(user.username) || {};
 
-  bindHandlers(bot);
+  if (userDbEntry.isBanned) {
+    timeoutUser(channel, user, message, userDbEntry);
+  } else {
+    const command = util.splitChatCommand(message);
 
-  channels[bot.channel] = {
-    channel: bot.channel,
-    bot: bot
-  };
-};
+    // Call the given command with a number of context variables.
+    if (command && commands[command.name]) {
+      commands[command.name]({
+        client,
+        channel,
+        user,
+        command,
+        userDbEntry
+      });
+    }
+  }
+});
 
-const bindHandlers = bot => {
-  bot.on('error', err => {
-    console.log(err);
-  });
+const timeoutUser = (channel, user, message, userDbEntry) => {
+  const channelDbEntry = db.findChannel(channel);
 
-  bot.on('join', () => {
-    console.log(`Join > channel: ${bot.channel}`);
-  });
-
-  bot.on('message', onMessage);
-};
-
-const onMessage = chat => {
-  processedMessages++;
-  chat.lowercaseUsername = chat.username.toLowerCase();
-
-  checkForChatCommand(chat);
-  checkForBannedUsername(chat);
-}
-
-const checkForChatCommand = chat => {
-  if (adminUsernames.includes(chat.lowercaseUsername)) {
-    if (chat.message.startsWith('!smashban')) {
-      // Convert all usernames to lowercase for comparisons.
-      const userToBan = chat.message.replace('!smashban', '').trim().toLowerCase();
-
-      if (!bannedUsernames.includes(userToBan)) {
-        bannedUsernames.push(userToBan);
-        console.log(`Ban list > ${userToBan} banned by user: ${chat.lowercaseUsername}, channel: ${chat.channel}`);
-        channels[chat.channel].bot.say(`User ${userToBan} has been global banned.`);
-      } else {
-        channels[chat.channel].bot.say(`User ${userToBan} is already global banned.`);
-      }
+  if (channelDbEntry && !channelDbEntry.exlcusions.includes(userDbEntry.username)) {
+    try {
+      client.timeout(channel, userDbEntry.username, timeoutDuration, `User ${userDbEntry.username} is on the community banlist.`);
+    } catch (err) {
+      console.log(JSON.stringify(err));
+      // TOOD: Check if this was due to lack of permissions and post in the channel if so.
+      // TODO: Check usage_timeout issue.
     }
   }
 };
 
-const checkForBannedUsername = chat => {
-  if (bannedUsernames.includes(chat.lowercaseUsername)) {
-    channels[chat.channel].bot.say(`/timeout ${chat.lowercaseUsername} ${timeoutDuration}`);
-    console.log(`Time out > user: ${chat.lowercaseUsername}, channel: ${chat.channel}`);
-  }
-};
-
-channelNames.forEach(name => {
-  connect(name);
-});
+client.connect();
