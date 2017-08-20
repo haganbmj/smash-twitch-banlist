@@ -1,5 +1,7 @@
 # smash-twitch-banlist
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/haganbmj/smash-twitch-banlist.svg)](https://greenkeeper.io/)
+
 ## Goal
 Shared twitch banlist for large smash streams.
 
