@@ -9,14 +9,10 @@ const timeoutDuration = 24 /* Hours */ * 60 /* Minutes */ * 60 /* Seconds */;
 const client = new tmi.client(tmiOptions);
 
 client.on('chat', (channel, user, message) => {
-  if (user.username === client.getUsername()) {
-    return;
-  }
-
   const userDbEntry = db.findUser(user.username) || {};
   channel = channel.replace('#', '');
 
-  if (userDbEntry.isBanned) {
+  if (userDbEntry.isBanned && !user.username === client.getUsername()) {
     timeoutUser(channel, user, message, userDbEntry);
   } else {
     const command = util.splitChatCommand(message);
