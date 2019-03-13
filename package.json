@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/haganbmj/smash-twitch-banlist#readme",
   "dependencies": {
-    "dotenv": "^5.0.0",
+    "dotenv": "^7.0.0",
     "lokijs": "^1.5.0",
     "tmi.js": "^1.2.1"
   }
